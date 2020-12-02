@@ -30,45 +30,50 @@ fn parse_password_entry(
 ) -> Result<(RangeInclusive<u32>, char, &str), ParseError> {
     let mut split_password_entry = password_entry.split(" ");
 
-    let valid_character_count_range =
-        extract_char_min_max_count(split_password_entry.next().expect("Range not found"))?;
+    let valid_character_count_range = extract_char_min_max_count(
+        split_password_entry
+            .next()
+            .ok_or(ParseError::MissingRangeString)?,
+    )?;
 
-    let character = match split_password_entry.next() {
-        Some(string) => match string.chars().nth(0) {
-            Some(character) => character,
-            None => return Err(ParseError::MissingCharacter),
-        },
-        None => return Err(ParseError::MissingCharacterString),
-    };
+    let character = split_password_entry
+        .next()
+        .ok_or(ParseError::MissingCharacterString)?
+        .chars()
+        .nth(0)
+        .ok_or(ParseError::MissingCharacter)?;
 
-    let password = match split_password_entry.next() {
-        Some(password) => password,
-        None => return Err(ParseError::MissingPasswordString),
-    };
+    let password = split_password_entry
+        .next()
+        .ok_or(ParseError::MissingPasswordString)?;
 
     Ok((valid_character_count_range, character, password))
 }
 
 fn extract_char_min_max_count(min_max_str: &str) -> Result<RangeInclusive<u32>, ParseError> {
     let mut split_min_max_str = min_max_str.split("-");
-    if let Some(min_value) = split_min_max_str.next() {
-        if let Some(max_value) = split_min_max_str.next() {
-            return Ok(parse_range_bound(min_value)?..=parse_range_bound(max_value)?);
-        }
-    }
-
-    panic!("Couldn't parse range");
+    let min_value = parse_range_bound(
+        split_min_max_str
+            .next()
+            .ok_or(ParseError::MissingMinBound)?,
+    )?;
+    let max_value = parse_range_bound(
+        split_min_max_str
+            .next()
+            .ok_or(ParseError::MissingMaxBound)?,
+    )?;
+    Ok(min_value..=max_value)
 }
 
 fn parse_range_bound(bound_str: &str) -> Result<u32, ParseError> {
-    match u32::from_str_radix(bound_str, 10) {
-        Ok(value) => Ok(value),
-        Err(_) => Err(ParseError::ParseRangeBoundError),
-    }
+    u32::from_str_radix(bound_str, 10).map_err(|_| ParseError::ParseRangeBoundError)
 }
 
 enum ParseError {
     ParseRangeBoundError,
+    MissingRangeString,
+    MissingMinBound,
+    MissingMaxBound,
     MissingCharacter,
     MissingCharacterString,
     MissingPasswordString,
