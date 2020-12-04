@@ -4,6 +4,7 @@ use std::collections::{HashMap, HashSet};
 #[derive(Debug)]
 enum Error {
     IoError(std::io::Error),
+    RegexError(regex::Error),
     ParseError,
 }
 
@@ -57,7 +58,7 @@ fn rules() -> HashMap<&'static str, RuleFunction> {
     rules.insert(
         "hgt",
         Box::new(|value| {
-            let regex = Regex::new(r"^([0-9]+)(cm|in)$").unwrap();
+            let regex = Regex::new(r"^([0-9]+)(cm|in)$").map_err(|e| Error::RegexError(e))?;
             let captures = regex.captures(value).ok_or(Error::ParseError)?;
             let height =
                 u32::from_str_radix(captures.get(1).ok_or(Error::ParseError)?.as_str(), 10)
@@ -71,7 +72,7 @@ fn rules() -> HashMap<&'static str, RuleFunction> {
     rules.insert(
         "hcl",
         Box::new(|value| {
-            let regex = Regex::new(r"^#([0-9a-f]{6})$").unwrap();
+            let regex = Regex::new(r"^#([0-9a-f]{6})$").map_err(|e| Error::RegexError(e))?;
             Ok(regex.is_match(value))
         }),
     );
