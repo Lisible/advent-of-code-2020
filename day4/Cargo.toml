@@ -1,0 +1,9 @@
+[package]
+name = "day4"
+version = "0.1.0"
+authors = ["Clément Sibille <claymeuns@protonmail.com>"]
+edition = "2018"
+
+[[bin]]
+name = "part1"
+path = "src/part1.rs"
