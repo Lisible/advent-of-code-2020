@@ -12,6 +12,7 @@ fn main() -> Result<(), Error> {
     for i in 0..2i32.pow(ENTRY_SIZE) {
         if !ids.contains(&i) && ids.contains(&(i + 1)) && ids.contains(&(i - 1)) {
             println!("{}", i);
+            break;
         }
     }
     Ok(())
