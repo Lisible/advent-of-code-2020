@@ -13,7 +13,7 @@ fn main() -> Result<(), Error> {
             .flat_map(|s| s.bytes().collect::<Vec<u8>>())
             .unique()
             .fold(0, |acc, q| {
-                acc + v.split("\n").all(|a| a.bytes().find(|&v| v == q).is_some()) as usize
+                acc + v.split("\n").all(|a| a.contains(q as char)) as usize
             })
     });
     println!("{:?}", count);
