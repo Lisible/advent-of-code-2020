@@ -21,7 +21,7 @@ fn main() -> Result<(), Error> {
 fn compute_id(string: &str) -> i32 {
     string.chars().rev().enumerate().fold(0, |mut acc, (i, v)| {
         if v == 'B' || v == 'R' {
-            acc += 2i32.pow(i as u32);
+            acc += 1 << i;
         }
 
         acc
