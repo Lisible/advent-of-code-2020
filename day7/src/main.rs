@@ -50,8 +50,8 @@ fn can_contain_bag(color: &str, rule: &Rule, rules: &HashMap<String, Rule>) -> b
 fn parse_rule(rule_string: &str) -> Result<Rule, Error> {
     let mut split_rule_string = rule_string.split(' ').peekable();
     let color = parse_color(&mut split_rule_string)?;
-    eat_word("bags", &mut split_rule_string)?;
-    eat_word("contain", &mut split_rule_string)?;
+    eat_any(&["bags"], &mut split_rule_string)?;
+    eat_any(&["contain"], &mut split_rule_string)?;
 
     let mut valid_content = vec![];
     loop {
@@ -89,20 +89,6 @@ fn parse_quantity(split_rule_string: &mut Peekable<Split<char>>) -> Result<u32, 
         Ok(0)
     } else {
         u32::from_str(quantity).map_err(|e| Error::QuantityParseError(e))
-    }
-}
-
-fn eat_word(
-    expected_word: &str,
-    split_rule_string: &mut Peekable<Split<char>>,
-) -> Result<(), Error> {
-    let word = split_rule_string
-        .next()
-        .ok_or(Error::UnexpectedEndOfString)?;
-    if word == expected_word {
-        Ok(())
-    } else {
-        Err(Error::UnexpectedWord(word.into()))
     }
 }
 
