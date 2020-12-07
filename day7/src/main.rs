@@ -6,7 +6,7 @@ use std::num::ParseIntError;
 use std::str::{FromStr, Split};
 
 fn main() -> Result<(), Error> {
-    let file = File::open("input2").map_err(|_| Error::InputFileNotFound)?;
+    let file = File::open("input").map_err(|_| Error::InputFileNotFound)?;
     let rules = BufReader::new(file)
         .lines()
         .try_fold(HashMap::new(), |mut acc, v| {
@@ -27,17 +27,15 @@ fn main() -> Result<(), Error> {
 }
 
 fn required_bag_count(color: &str, rules: &HashMap<String, Rule>) -> usize {
-    count(color, rules) - 1
-}
-
-fn count(color: &str, rules: &HashMap<String, Rule>) -> usize {
-    let bag = rules.get(color).unwrap();
-    let mut bags = 1;
-    for (c, color) in bag.valid_content.iter() {
-        bags += *c as usize * count(color, rules);
-    }
-
-    bags
+    let rule = rules.get(color).unwrap();
+    rule.valid_content
+        .iter()
+        .fold(0, |acc, (c, _)| acc + *c as usize)
+        + rule
+            .valid_content
+            .iter()
+            .map(|(c, color)| *c as usize * required_bag_count(color, rules))
+            .fold(0, |a, b| a + b)
 }
 
 fn can_contain_bag(color: &str, rule: &Rule, rules: &HashMap<String, Rule>) -> bool {
