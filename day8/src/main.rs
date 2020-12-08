@@ -18,32 +18,72 @@ fn main() -> Result<(), Error> {
         ));
         Ok(acc)
     })?;
+    let flippable_instructions =
+        instructions
+            .iter()
+            .enumerate()
+            .fold(vec![], |mut acc, (i, &(instruction, _))| {
+                if instruction == InstructionType::Jmp || instruction == InstructionType::Nop {
+                    acc.push(i);
+                }
 
-    let mut state = (0i32, 0i32); // pc, acc
-    let mut visited_instructions = HashSet::new();
-    let mut next_state;
-    let mut state_history = vec![];
-    loop {
-        let instruction = &instructions[state.0 as usize];
-        if visited_instructions.contains(&state.0) {
+                acc
+            });
+
+    for flippable_instruction in flippable_instructions {
+        let result = run(&instructions, flippable_instruction);
+        println!("is {} swappable ?", flippable_instruction);
+        if result.0 as usize == instructions.len() {
+            println!("yes: {}", result.1);
             break;
+        } else {
+            println!("no\n");
         }
-
-        visited_instructions.insert(state.0);
-        match instruction {
-            (InstructionType::Nop, _) => next_state = (state.0 + 1, state.1),
-            (InstructionType::Acc, value) => next_state = (state.0 + 1, state.1 + value),
-            (InstructionType::Jmp, value) => next_state = (state.0 + value, state.1),
-        }
-
-        state_history.push(state);
-        state = next_state;
     }
 
     Ok(())
 }
 
-#[derive(Debug, Clone, PartialEq)]
+fn run(instructions: &Vec<Instruction>, flippable_instruction: usize) -> (i32, i32) {
+    let mut pc = 0;
+    let mut acc = 0;
+    let mut visited_instructions = HashSet::new();
+    let mut state_history = vec![];
+    loop {
+        if pc as usize >= instructions.len() || visited_instructions.contains(&pc) {
+            break;
+        }
+
+        let instruction = if pc as usize == flippable_instruction {
+            swap_instruction(pc, instructions)
+        } else {
+            instructions[pc as usize]
+        };
+        visited_instructions.insert(pc);
+        match instruction {
+            (InstructionType::Nop, _) => pc += 1,
+            (InstructionType::Acc, value) => {
+                acc += value;
+                pc += 1
+            }
+            (InstructionType::Jmp, value) => pc += value,
+        }
+        state_history.push((pc, acc));
+    }
+
+    (pc, acc)
+}
+
+fn swap_instruction(pc: i32, instructions: &Vec<Instruction>) -> Instruction {
+    let instruction = instructions[pc as usize];
+    match instruction {
+        (InstructionType::Nop, value) => (InstructionType::Jmp, value),
+        (InstructionType::Jmp, value) => (InstructionType::Nop, value),
+        _ => instruction,
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum InstructionType {
     Nop,
     Jmp,
