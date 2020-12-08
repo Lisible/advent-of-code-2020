@@ -10,7 +10,6 @@ type Instruction = (InstructionType, i32);
 /// I went for a backtracking solution but when I realized I had to find a way to flip nop
 /// it was late and I was tired so I just gave up and wrote
 /// the bruteforce solution.
-/// This solution will only work if the input file requires a jmp to be flipped to nop.
 fn main() -> Result<(), Error> {
     let file = File::open("input").map_err(|_| Error::FileNotFound)?;
     let reader = BufReader::new(file);
