@@ -48,7 +48,6 @@ fn run(instructions: &Vec<Instruction>, flippable_instruction: usize) -> (i32, i
     let mut pc = 0;
     let mut acc = 0;
     let mut visited_instructions = HashSet::new();
-    let mut state_history = vec![];
     loop {
         if pc as usize >= instructions.len() || visited_instructions.contains(&pc) {
             break;
@@ -68,7 +67,6 @@ fn run(instructions: &Vec<Instruction>, flippable_instruction: usize) -> (i32, i
             }
             (InstructionType::Jmp, value) => pc += value,
         }
-        state_history.push((pc, acc));
     }
 
     (pc, acc)
