@@ -25,7 +25,6 @@ fn main() -> Result<(), Error> {
 #[derive(Debug)]
 struct Ship {
     position: Position,
-    waypoint_angle: i32,
     waypoint_position: Position,
 }
 
@@ -33,7 +32,6 @@ impl Ship {
     pub fn new() -> Self {
         Ship {
             position: Position(0, 0),
-            waypoint_angle: 0,
             waypoint_position: Position(10, 1),
         }
     }
