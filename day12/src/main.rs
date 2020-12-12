@@ -2,7 +2,6 @@ use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::num::ParseIntError;
-use std::ops::{Add, Sub};
 use std::str::FromStr;
 
 fn main() -> Result<(), Error> {
@@ -13,59 +12,79 @@ fn main() -> Result<(), Error> {
         .map(|s| s.expect("Read error").parse().expect("Parse error"))
         .collect();
 
-    let mut position = Position(0i32, 0i32);
-    let mut direction = Direction::East;
-
+    let mut ship = Ship::new();
     for action in actions {
-        let (pos, dir) = apply_action(position, direction, action)?;
-        position = pos;
-        direction = dir;
+        ship.perform_action(action);
     }
 
-    println!(
-        "Position: {}, Result: {}",
-        position,
-        position.0.abs() + position.1.abs()
-    );
+    println!("Result: {}", ship.manhattan_distance_from_origin());
 
     Ok(())
 }
 
-fn apply_action(
+#[derive(Debug)]
+struct Ship {
     position: Position,
-    direction: Direction,
-    action: Action,
-) -> Result<(Position, Direction), Error> {
-    let mut position = position;
-    let mut direction = direction;
-    match action {
-        Action::Move(d, value) => {
-            position = compute_new_position(position, d, value);
-        }
-        Action::MoveForward(value) => {
-            position = compute_new_position(position, direction, value);
-        }
-        Action::TurnLeft(degrees) => {
-            direction = direction - degrees;
-        }
-        Action::TurnRight(degrees) => {
-            direction = direction + degrees;
-        }
-    }
-
-    Ok((position, direction))
+    waypoint_angle: i32,
+    waypoint_position: Position,
 }
 
-fn compute_new_position(position: Position, direction: Direction, value: i32) -> Position {
-    let mut position = position;
-    match direction {
-        Direction::North => position.1 += value,
-        Direction::East => position.0 += value,
-        Direction::South => position.1 -= value,
-        Direction::West => position.0 -= value,
+impl Ship {
+    pub fn new() -> Self {
+        Ship {
+            position: Position(0, 0),
+            waypoint_angle: 0,
+            waypoint_position: Position(10, 1),
+        }
     }
 
-    position
+    pub fn perform_action(&mut self, action: Action) {
+        match action {
+            Action::MoveForward(value) => {
+                self.navigate(value);
+            }
+            Action::Move(d, value) => {
+                self.move_waypoint(d, value);
+            }
+            Action::TurnLeft(degrees) => {
+                self.rotate_waypoint(-degrees);
+            }
+            Action::TurnRight(degrees) => {
+                self.rotate_waypoint(degrees);
+            }
+        }
+    }
+
+    fn move_waypoint(&mut self, d: Direction, value: i32) {
+        match d {
+            Direction::North => self.waypoint_position.1 += value,
+            Direction::East => self.waypoint_position.0 += value,
+            Direction::South => self.waypoint_position.1 -= value,
+            Direction::West => self.waypoint_position.0 -= value,
+        }
+    }
+
+    fn navigate(&mut self, steps: i32) {
+        for _ in 0..steps {
+            self.position.0 += self.waypoint_position.0;
+            self.position.1 += self.waypoint_position.1;
+        }
+    }
+
+    fn rotate_waypoint(&mut self, relative_angle_degrees: i32) {
+        const SIN: [i32; 4] = [0, 1, 0, -1];
+        const COS: [i32; 4] = [1, 0, -1, 0];
+
+        let i = (4 + relative_angle_degrees as usize / 90 % 4) % 4;
+        self.waypoint_position = Position(
+            self.waypoint_position.0 * COS[i] + self.waypoint_position.1 * SIN[i],
+            -self.waypoint_position.0 * SIN[i] + self.waypoint_position.1 * COS[i],
+        );
+    }
+
+    fn manhattan_distance_from_origin(&mut self) -> i32 {
+        self.position.0.abs() + self.position.1.abs()
+    }
 }
 
 #[derive(Debug)]
@@ -108,33 +127,6 @@ impl From<u8> for Direction {
             b'W' => Direction::West,
             _ => panic!("Unknown direction"),
         }
-    }
-}
-
-impl Add<i32> for Direction {
-    type Output = Direction;
-
-    fn add(self, angle_degrees: i32) -> Self::Output {
-        const DIRECTIONS: [Direction; 4] = [
-            Direction::North,
-            Direction::East,
-            Direction::South,
-            Direction::West,
-        ];
-
-        let index = DIRECTIONS
-            .iter()
-            .position(|&v| v == self)
-            .expect("Unknown direction");
-
-        DIRECTIONS[(((index as i32 + angle_degrees / 90) % 4 + 4) % 4) as usize]
-    }
-}
-impl Sub<i32> for Direction {
-    type Output = Direction;
-
-    fn sub(self, angle_degrees: i32) -> Self::Output {
-        self + -angle_degrees
     }
 }
 
