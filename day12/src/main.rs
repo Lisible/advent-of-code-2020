@@ -1,4 +1,3 @@
-use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::num::ParseIntError;
@@ -130,11 +129,6 @@ impl From<u8> for Direction {
 
 #[derive(Debug, Copy, Clone)]
 struct Position(i32, i32);
-impl Display for Position {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "x: {}, y: {}", self.0, self.1)
-    }
-}
 
 #[derive(Debug)]
 enum Error {
