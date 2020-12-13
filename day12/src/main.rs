@@ -15,7 +15,6 @@ fn main() -> Result<(), Error> {
     for action in actions {
         ship.perform_action(action);
     }
-
     println!("Result: {}", ship.manhattan_distance_from_origin());
 
     Ok(())
@@ -62,17 +61,20 @@ impl Ship {
     }
 
     fn navigate(&mut self, steps: i32) {
-        for _ in 0..steps {
-            self.position.0 += self.waypoint_position.0;
-            self.position.1 += self.waypoint_position.1;
-        }
+        self.position.0 += self.waypoint_position.0 * steps;
+        self.position.1 += self.waypoint_position.1 * steps;
     }
 
     fn rotate_waypoint(&mut self, relative_angle_degrees: i32) {
         const SIN: [i32; 4] = [0, 1, 0, -1];
         const COS: [i32; 4] = [1, 0, -1, 0];
 
-        let i = (4 + relative_angle_degrees as usize / 90 % 4) % 4;
+        let i = if relative_angle_degrees < 0 {
+            ((360 + relative_angle_degrees) / 90) as usize
+        } else {
+            (relative_angle_degrees / 90) as usize
+        };
+
         self.waypoint_position = Position(
             self.waypoint_position.0 * COS[i] + self.waypoint_position.1 * SIN[i],
             -self.waypoint_position.0 * SIN[i] + self.waypoint_position.1 * COS[i],
