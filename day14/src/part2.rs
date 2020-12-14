@@ -14,23 +14,22 @@ fn main() -> Result<(), Error> {
             let lhs = split_line.next().ok_or(Error::LhsNotFound)?;
             let rhs = split_line.next().ok_or(Error::RhsNotFound)?;
             if lhs == "mask" {
-                Ok((rhs.to_string(), memory))
-            } else {
-                let mask_1 = u64::from_str_radix(&mask.replace("X", "0"), 2).unwrap();
-                let mask_x =
-                    u64::from_str_radix(&mask.replace("1", "0").replace("X", "1"), 2).unwrap();
-
-                let mut dest_addr =
-                    u64::from_str(&lhs[4..lhs.len() - 1]).map_err(|e| Error::ParseError(e))?;
-                dest_addr |= mask_1;
-                let dest_addrs = generate_floating_addresses(dest_addr, mask_x, 0);
-                let value = u64::from_str(rhs).unwrap();
-                for dest_addr in dest_addrs {
-                    *memory.entry(dest_addr).or_insert(0) = value;
-                }
-
-                Ok((mask.into(), memory))
+                return Ok((rhs.to_string(), memory));
             }
+
+            let mask_1 = u64::from_str_radix(&mask.replace("X", "0"), 2).unwrap();
+            let mask_x = u64::from_str_radix(&mask.replace("1", "0").replace("X", "1"), 2).unwrap();
+
+            let mut dest_addr =
+                u64::from_str(&lhs[4..lhs.len() - 1]).map_err(|e| Error::ParseError(e))?;
+            dest_addr |= mask_1;
+            let dest_addrs = generate_floating_addresses(dest_addr, mask_x, 0);
+            let value = u64::from_str(rhs).unwrap();
+            for dest_addr in dest_addrs {
+                *memory.entry(dest_addr).or_insert(0) = value;
+            }
+
+            Ok((mask.into(), memory))
         },
     )?;
 
