@@ -14,23 +14,19 @@ fn main() -> Result<(), Error> {
             let lhs = split_line.next().ok_or(Error::LhsNotFound)?;
             let rhs = split_line.next().ok_or(Error::RhsNotFound)?;
             if lhs == "mask" {
-                let mask_0 = u64::from_str_radix(
-                    &*rhs.replace("1", "X").replace("0", "1").replace("X", "0"),
-                    2,
-                )
-                .map_err(|e| Error::ParseError(e))?;
+                let mask_0 = u64::from_str_radix(&*rhs.replace("X", "1"), 2)
+                    .map_err(|e| Error::ParseError(e))?;
                 let mask_1 = u64::from_str_radix(&*rhs.replace("X", "0"), 2)
                     .map_err(|e| Error::ParseError(e))?;
-                Ok(((mask_0, mask_1), memory))
-            } else {
-                let addr =
-                    u64::from_str(&lhs[4..lhs.len() - 1]).map_err(|e| Error::ParseError(e))?;
-                let value = u64::from_str(rhs).map_err(|e| Error::ParseError(e))?;
-                let value = value | mask_1;
-                let value = value & !mask_0;
-                *memory.entry(addr).or_insert(0) = value;
-                Ok(((mask_0, mask_1), memory))
+                return Ok(((mask_0, mask_1), memory));
             }
+
+            let addr = u64::from_str(&lhs[4..lhs.len() - 1]).map_err(|e| Error::ParseError(e))?;
+            let value = u64::from_str(rhs).map_err(|e| Error::ParseError(e))?;
+            let value = value | mask_1;
+            let value = value & mask_0;
+            *memory.entry(addr).or_insert(0) = value;
+            Ok(((mask_0, mask_1), memory))
         },
     )?;
 
