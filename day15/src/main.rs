@@ -21,7 +21,7 @@ struct TurnIterator {
 
 impl TurnIterator {
     pub fn new() -> Self {
-        let mut last_turns: HashMap<u32, u32> = HashMap::new();
+        let mut last_turns = HashMap::new();
         for (i, &number) in STARTING_NUMBERS.iter().enumerate() {
             if i == STARTING_NUMBERS.len() - 1 {
                 break;
