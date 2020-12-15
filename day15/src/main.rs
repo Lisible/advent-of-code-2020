@@ -15,8 +15,8 @@ fn main() {
 
 struct TurnIterator {
     last_turns: HashMap<u32, u32>,
-    numbers: Vec<u32>,
     turn: u32,
+    last_number: u32,
 }
 
 impl TurnIterator {
@@ -27,13 +27,13 @@ impl TurnIterator {
                 break;
             }
 
-            *last_turns.entry(number).or_default() = (i + 1) as u32;
+            last_turns.insert(number, (i + 1) as u32);
         }
 
         Self {
             last_turns,
-            numbers: STARTING_NUMBERS.to_vec(),
             turn: STARTING_NUMBERS.len() as u32,
+            last_number: STARTING_NUMBERS[STARTING_NUMBERS.len() - 1],
         }
     }
 }
@@ -42,18 +42,15 @@ impl Iterator for TurnIterator {
     type Item = u32;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(&last_turn) = self.last_turns.get(&self.numbers[self.turn as usize - 1]) {
-            self.numbers.push(self.turn - last_turn);
+        let l = self.last_number;
+        if let Some(&last) = self.last_turns.get(&self.last_number) {
+            self.last_number = self.turn - last;
         } else {
-            self.numbers.push(0);
+            self.last_number = 0;
         }
 
-        *self
-            .last_turns
-            .entry(self.numbers[self.turn as usize - 1])
-            .or_default() = self.turn;
-
+        self.last_turns.insert(l, self.turn);
         self.turn += 1;
-        self.numbers.last().cloned()
+        Some(self.last_number)
     }
 }
