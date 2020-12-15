@@ -22,12 +22,12 @@ struct TurnIterator {
 impl TurnIterator {
     pub fn new() -> Self {
         let mut last_turns: HashMap<u32, u32> = HashMap::new();
-        for (i, number) in STARTING_NUMBERS.iter().enumerate() {
+        for (i, &number) in STARTING_NUMBERS.iter().enumerate() {
             if i == STARTING_NUMBERS.len() - 1 {
                 break;
             }
 
-            *last_turns.entry(*number).or_default() = (i + 1) as u32;
+            *last_turns.entry(number).or_default() = (i + 1) as u32;
         }
 
         Self {
@@ -42,8 +42,8 @@ impl Iterator for TurnIterator {
     type Item = u32;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(last_turn) = self.last_turns.get(&self.numbers[self.turn as usize - 1]) {
-            self.numbers.push(self.turn - *last_turn);
+        if let Some(&last_turn) = self.last_turns.get(&self.numbers[self.turn as usize - 1]) {
+            self.numbers.push(self.turn - last_turn);
         } else {
             self.numbers.push(0);
         }
