@@ -77,7 +77,7 @@ fn main() -> Result<(), Error> {
     sorted_allergens_ingredient.sort_by(|a, b| a.0.cmp(&b.0));
 
     println!(
-        "sorted: {:?}",
+        "sorted: {}",
         sorted_allergens_ingredient
             .iter()
             .map(|a| a.1.iter().next().unwrap().clone())
