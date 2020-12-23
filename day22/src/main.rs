@@ -7,7 +7,7 @@ use std::io::{BufRead, BufReader};
 use std::str::FromStr;
 
 fn main() -> Result<(), Error> {
-    let file = File::open("example_input").map_err(|e| Error::InputFileOpenError(e))?;
+    let file = File::open("input").map_err(|e| Error::InputFileOpenError(e))?;
     let reader = BufReader::new(file);
     let decks = parse_decks(reader)?;
     let mut game = RecursiveCombatGame::with_decks(decks, 1);
@@ -103,8 +103,14 @@ impl RecursiveCombatGame {
             };
             println!("...Anyway back to game {}", self.game_number);
         } else {
-            played_cards.sort_by_key(|(_, card)| card.0);
-            winning_player = played_cards[played_cards.len() - 1].0;
+            winning_player = played_cards
+                .iter()
+                .enumerate()
+                .fold(
+                    (0, 0),
+                    |acc, (i, c)| if acc.1 < c.1 .0 { (i, c.1 .0) } else { acc },
+                )
+                .0;
         }
 
         println!(
@@ -115,7 +121,10 @@ impl RecursiveCombatGame {
         );
         self.players_decks[winning_player]
             .0
-            .append(&mut played_cards.into_iter().map(|a| a.1).rev().collect());
+            .push_back(played_cards[winning_player].1.clone());
+        self.players_decks[winning_player]
+            .0
+            .push_back(played_cards[(winning_player + 1) % 2].1.clone());
 
         self.previous_decks_hashes.push(decks_hash);
         self.round += 1;
