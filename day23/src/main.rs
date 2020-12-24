@@ -34,14 +34,15 @@ struct Cups {
 
 impl Cups {
     pub fn new(cups: Vec<usize>, first_label: usize) -> Self {
+        println!("a");
         let mut next_cups = vec![0; cups.len()];
         for (a, b) in cups.iter().cycle().zip(cups.iter().cycle().skip(1)) {
-            next_cups[a - 1] = b - 1;
-
-            if next_cups.iter().filter(|&&a| a == 0).count() == 1 {
+            if next_cups[a - 1] != 0 {
                 break;
             }
+            next_cups[a - 1] = b - 1;
         }
+        println!("b");
 
         Self {
             next_cups,
