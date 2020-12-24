@@ -17,8 +17,6 @@ fn main() {
         vec.push(i + 10);
     }
 
-    println!("{}", vec.len());
-
     let mut cups = Cups::new(vec, 2);
     for _move in 0..10_000_000 {
         cups.execute_move();
