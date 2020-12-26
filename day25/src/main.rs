@@ -1,5 +1,5 @@
 fn main() {
-    println!("{}", compute_encryption_key(5764801, 17807724));
+    println!("{}", compute_encryption_key(18499292, 8790390));
 }
 
 fn compute_encryption_key(card_public_key: u64, door_public_key: u64) -> u64 {
@@ -17,14 +17,14 @@ fn compute_encryption_key(card_public_key: u64, door_public_key: u64) -> u64 {
 }
 
 fn find_loop_size(initial_subject_number: u64, card_public_key: u64) -> u64 {
-    let mut loop_size = 1;
+    let mut loop_size = 0;
+    let mut res = 1;
     loop {
-        let n = transform_subject_number(initial_subject_number, loop_size);
-        if n == card_public_key {
+        res = (res * initial_subject_number) % 20201227;
+        loop_size += 1;
+        if res == card_public_key {
             return loop_size;
         }
-
-        loop_size += 1;
     }
 }
 
