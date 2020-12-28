@@ -16,23 +16,21 @@ fn main() -> Result<(), Error> {
     )
     .map_err(|e| Error::ParseIntError(e))?;
 
-    let bus_ids: Vec<u32> = lines
+    let bus_ids = lines
         .next()
         .ok_or(Error::BusIdsNotFound)?
-        .map_err(|e| Error::ReadError(e))?
-        .split(",")
-        .filter_map(|s| match s {
-            "x" => None,
-            id => Some(u32::from_str(id).expect("Missing bus id")),
-        })
-        .collect();
+        .map_err(|e| Error::ReadError(e))?;
+    let bus_ids: Vec<&str> = bus_ids.split(",").to_owned().collect();
 
     let bus_id: u32 = bus_ids
         .iter()
-        .min_by(|&schedule_a, &schedule_b| {
-            bus_from(timestamp, *schedule_a).cmp(&bus_from(timestamp, *schedule_b))
+        .filter_map(|s| match s {
+            &"x" => None,
+            id => Some(u32::from_str(id).expect("Missing bus id")),
         })
-        .cloned()
+        .min_by(|&schedule_a, &schedule_b| {
+            bus_from(timestamp, schedule_a).cmp(&bus_from(timestamp, schedule_b))
+        })
         .ok_or(Error::NoResultFound)?;
 
     println!(
@@ -40,11 +38,45 @@ fn main() -> Result<(), Error> {
         bus_id * (bus_from(timestamp, bus_id) - timestamp)
     );
 
-    println!("{:?}", bus_ids);
-
-    println!("{:?}", extended_euclide(120, 23));
+    let eqs = bus_ids
+        .iter()
+        .enumerate()
+        .filter(|(_, bus_id)| *bus_id != &"x")
+        .map(|(i, bus_id)| {
+            let bus_id = i64::from_str(bus_id).expect("Missing bus id");
+            ((-(i as i64) % bus_id + bus_id) % bus_id, bus_id)
+        })
+        .collect();
+    part_2(&eqs);
 
     Ok(())
+}
+
+fn part_2(eqs: &Vec<(i64, i64)>) {
+    let t: i64 = eqs.iter().map(|e| e.1).product();
+
+    println!(
+        "{}",
+        eqs.iter().fold(0i64, |acc, &(n, ni)| {
+            let nci = t / ni;
+            acc + n * nci * modular_inverse(ni, nci)
+        }) % t
+    )
+}
+
+fn modular_inverse(a: i64, b: i64) -> i64 {
+    let (_, _, v) = extended_euclide(a, b);
+    (v % a + a) % a
+}
+
+fn extended_euclide(a: i64, b: i64) -> (i64, i64, i64) {
+    match b {
+        0 => (a, 1, 0),
+        _ => {
+            let (dp, up, vp) = extended_euclide(b, a % b);
+            (dp, vp, up - (a / b) * vp)
+        }
+    }
 }
 
 fn bus_from(timestamp: u32, bus_id: u32) -> u32 {
@@ -54,25 +86,6 @@ fn bus_from(timestamp: u32, bus_id: u32) -> u32 {
     }
 
     bus_timestamp
-}
-
-fn extended_euclide_rec(r: i32, u: i32, v: i32, rp: i32, up: i32, vp: i32) -> (i32, i32, i32) {
-    if rp == 0 {
-        (r, u, v)
-    } else {
-        extended_euclide_rec(
-            rp,
-            up,
-            vp,
-            r - (r / rp) * rp,
-            u - (r / rp) * up,
-            v - (r / rp) * vp,
-        )
-    }
-}
-
-fn extended_euclide(a: i32, b: i32) -> (i32, i32, i32) {
-    extended_euclide_rec(a, 1, 0, b, 0, 1)
 }
 
 #[derive(Debug)]
