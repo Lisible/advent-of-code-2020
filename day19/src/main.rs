@@ -1,23 +1,59 @@
+use regex::Regex;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::str::FromStr;
 
 fn main() -> Result<(), Error> {
-    let file = File::open("example_input").map_err(|e| Error::InputReadError(e))?;
+    let file = File::open("input").map_err(|e| Error::InputReadError(e))?;
     let buf_reader = BufReader::new(file);
-    let rules: Rules = buf_reader.lines().try_fold(Rules::new(), |mut acc, v| {
-        let rule = v.map_err(|e| Error::InputReadError(e))?;
-        let rule: Rule = rule.parse()?;
-        acc.insert(rule.identifier, rule);
-        Ok(acc)
-    })?;
+    let mut lines = buf_reader.lines();
 
-    dbg!(rules);
+    let mut rules = Rules::new();
+    while let Some(Ok(rule)) = lines.next() {
+        if rule.is_empty() {
+            break;
+        }
+        let rule: Rule = rule.parse()?;
+        rules.insert(rule.identifier, rule);
+    }
+
+    let regex_string = generate_regex_for_rule(0, &rules);
+    let regex = Regex::new(&*format!("{}{}{}", "^", &regex_string, "$")).unwrap();
+    let p1 = lines
+        .filter(|str| {
+            let str = str.as_ref().unwrap();
+            regex.is_match(&str)
+        })
+        .count();
+
+    println!("{}", p1);
     Ok(())
 }
 
 type Rules = HashMap<usize, Rule>;
+
+fn generate_regex_for_rule(rule_index: usize, rules: &Rules) -> String {
+    let rule = rules.get(&rule_index).unwrap();
+    let mut regex_string = String::new();
+    for (i, definition) in rule.definitions.iter().enumerate() {
+        regex_string += generate_regex_for_definition(definition, rules).as_str();
+        if i < rule.definitions.len() - 1 {
+            regex_string += "|"
+        }
+    }
+
+    regex_string
+}
+
+fn generate_regex_for_definition(definition: &RuleDefinition, rules: &Rules) -> String {
+    match definition {
+        RuleDefinition::TerminalRule(c) => String::from(*c),
+        RuleDefinition::RuleSequence(s) => s.iter().fold(String::new(), |acc, i| {
+            acc + &*format!("{}{}{}", "(", &*generate_regex_for_rule(*i, &rules), ")")
+        }),
+    }
+}
 
 #[derive(Debug)]
 struct Rule {
@@ -37,7 +73,7 @@ impl FromStr for Rule {
             .next()
             .ok_or(Error::RuleDefinitionNotFound)?
             .trim();
-        let mut split_rule_definitions = rule_definitions.split("|");
+        let split_rule_definitions = rule_definitions.split("|");
 
         let definitions: Vec<RuleDefinition> = split_rule_definitions
             .filter_map(|definition_str| definition_str.parse().ok())
