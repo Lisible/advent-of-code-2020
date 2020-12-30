@@ -5,7 +5,7 @@ use std::io::{BufRead, BufReader};
 use std::str::FromStr;
 
 fn main() -> Result<(), Error> {
-    let file = File::open("input").map_err(|e| Error::InputReadError(e))?;
+    let file = File::open("input2").map_err(|e| Error::InputReadError(e))?;
     let buf_reader = BufReader::new(file);
     let mut lines = buf_reader.lines();
 
@@ -18,7 +18,8 @@ fn main() -> Result<(), Error> {
         rules.insert(rule.identifier, rule);
     }
 
-    let regex_string = generate_regex_for_rule(0, &rules);
+    let regex_string = generate_regex_for_rule(0, 0, &rules);
+    println!("{}", generate_regex_for_rule(0, 11, &rules));
     let regex = Regex::new(&*format!("{}{}{}", "^", &regex_string, "$")).unwrap();
     let p1 = lines
         .filter(|str| {
@@ -33,11 +34,11 @@ fn main() -> Result<(), Error> {
 
 type Rules = HashMap<usize, Rule>;
 
-fn generate_regex_for_rule(rule_index: usize, rules: &Rules) -> String {
+fn generate_regex_for_rule(n: usize, rule_index: usize, rules: &Rules) -> String {
     let rule = rules.get(&rule_index).unwrap();
     let mut regex_string = String::new();
     for (i, definition) in rule.definitions.iter().enumerate() {
-        regex_string += generate_regex_for_definition(definition, rules).as_str();
+        regex_string += generate_regex_for_definition(n + 1, definition, rules).as_str();
         if i < rule.definitions.len() - 1 {
             regex_string += "|"
         }
@@ -46,11 +47,17 @@ fn generate_regex_for_rule(rule_index: usize, rules: &Rules) -> String {
     regex_string
 }
 
-fn generate_regex_for_definition(definition: &RuleDefinition, rules: &Rules) -> String {
+fn generate_regex_for_definition(n: usize, definition: &RuleDefinition, rules: &Rules) -> String {
     match definition {
         RuleDefinition::TerminalRule(c) => String::from(*c),
         RuleDefinition::RuleSequence(s) => s.iter().fold(String::new(), |acc, i| {
-            acc + &*format!("{}{}{}", "(", &*generate_regex_for_rule(*i, &rules), ")")
+            let mut result = String::new();
+
+            if n < 15 {
+                result = format!("{}{}{}", "(", &*generate_regex_for_rule(n, *i, &rules), ")")
+            }
+
+            acc + &*result
         }),
     }
 }
